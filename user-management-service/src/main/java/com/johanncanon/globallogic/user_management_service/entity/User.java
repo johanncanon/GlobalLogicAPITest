@@ -11,7 +11,9 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.hibernate.annotations.GenericGenerator;
 
@@ -36,22 +38,38 @@ public class User {
 
     @Column(name = "created_at")
     private LocalDateTime created;
+    @Transient
+    private String formattedCreated;
+
     private String lastLogin;
     private String token;
-    private Boolean isActive;
 
-    public User() {
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
+    @PrePersist
+    public void prePersist() {
+        this.created = LocalDateTime.now();
+        this.formattedCreated = Utils.formatDateTime(this.created);
     }
 
-    public User(String name, String password, String email, List<Phone> phones, LocalDateTime created,
-            String lastLogin, String token, Boolean isActive) {
+    public User() {
+        this.id = Utils.generateRandomUUID();
+        this.lastLogin = Utils.formatDateTime(LocalDateTime.now());
+    }
+
+    public User(
+            String name, String password, String email,
+            List<Phone> phones, LocalDateTime created,
+            String token, boolean isActive) {
+
         this.id = Utils.generateRandomUUID();
         this.name = name;
         this.password = password;
         this.email = email;
         this.phones = phones;
         this.created = created;
-        this.lastLogin = lastLogin;
+        this.lastLogin = Utils.formatDateTime(LocalDateTime.now());
         this.token = token;
         this.isActive = isActive;
     }
@@ -88,12 +106,8 @@ public class User {
         this.phones = phones;
     }
 
-    public LocalDateTime getCreated() {
-        return created;
-    }
-
-    public void setCreated(LocalDateTime created) {
-        this.created = created;
+    public String getFormattedCreated() {
+        return formattedCreated != null ? formattedCreated : Utils.formatDateTime(created);
     }
 
     public String getLastLogin() {
@@ -112,11 +126,11 @@ public class User {
         this.token = token;
     }
 
-    public Boolean getIsActive() {
+    public boolean getIsActive() {
         return isActive;
     }
 
-    public void setIsActive(Boolean isActive) {
+    public void setIsActive(boolean isActive) {
         this.isActive = isActive;
     }
 

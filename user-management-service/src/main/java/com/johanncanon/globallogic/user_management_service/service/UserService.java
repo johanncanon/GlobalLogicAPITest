@@ -11,6 +11,7 @@ import com.johanncanon.globallogic.user_management_service.config.security.JwtUt
 import com.johanncanon.globallogic.user_management_service.dto.CreateUserRequest;
 import com.johanncanon.globallogic.user_management_service.dto.JwtResponse;
 import com.johanncanon.globallogic.user_management_service.dto.LoginRequest;
+import com.johanncanon.globallogic.user_management_service.dto.PhoneRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
 import com.johanncanon.globallogic.user_management_service.entity.Phone;
 import com.johanncanon.globallogic.user_management_service.entity.User;
@@ -46,11 +47,12 @@ public class UserService {
         userEntity.setName(request.getName());
         userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
         userEntity.setEmail(request.getEmail());
-        userEntity.setPhones(getPhonesFromRequest(request));
-        /**
-         * 1. con la lista de phonesRequest, hacer un forEach para setearlos en el
-         * userEntity
-         */
+
+        userEntity.setToken(jwtUtil.generateToken(request.getName()));
+
+        for (Phone phone : getPhonesFromRequest(request)) {
+            userEntity.addPhone(phone);
+        }
 
         var userSaved = userRepository.save(userEntity);
 
@@ -76,7 +78,7 @@ public class UserService {
         return new JwtResponse(jwtToken, userResponse);
     }
 
-    public UserResponse getUserById(Long userId) {
+    public UserResponse getUserById(String userId) {
         var user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -101,11 +103,23 @@ public class UserService {
     private UserResponse mapToUserResponse(User user) {
         return new UserResponse(
                 user.getId().toString(),
-                user.getCreated() == null ? null : user.getCreated().toString(), // TODO: validar formato de salida
-                user.getLastLogin(), // TODO: sacar la hora del ultimo login
-                user.getToken(), // TODO: obtener el token de la ultima sesion
-                user.getIsActive() // TODO: check if this is correct
-        );
+                user.getFormattedCreated(),
+                user.getLastLogin(),
+                user.getToken(),
+                user.getIsActive(),
+                user.getName(),
+                user.getEmail(),
+                user.getPassword(),
+                user.getPhones() != null ? mapPhoneToPhoneRequest(user.getPhones()) : null);
+    }
+
+    private List<PhoneRequest> mapPhoneToPhoneRequest(List<Phone> phones) {
+        return phones.stream()
+                .map(phone -> new PhoneRequest(
+                        phone.getNumber(),
+                        phone.getCityCode(),
+                        phone.getCountryCode()))
+                .collect(Collectors.toList());
     }
 
     private List<Phone> getPhonesFromRequest(CreateUserRequest request) {
