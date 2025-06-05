@@ -10,9 +10,10 @@ import com.johanncanon.globallogic.user_management_service.entity.User;
 @Repository
 public interface UserRepository extends JpaRepository< User, Long > {
 
-    Optional<User> findByUsername( String username );
-    Optional<User> findByEmail( String email );
-    boolean existsByUsername( String username );
+    Optional<User> findByName( String name );
+    Optional<User> findById( String email );
+    boolean existsByName( String name );
     boolean existsByEmail( String email );
-
+    boolean existsById( String id );
+    
 }

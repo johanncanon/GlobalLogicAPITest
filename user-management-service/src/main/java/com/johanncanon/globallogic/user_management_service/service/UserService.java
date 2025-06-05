@@ -1,6 +1,8 @@
 package com.johanncanon.globallogic.user_management_service.service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -10,8 +12,9 @@ import com.johanncanon.globallogic.user_management_service.dto.CreateUserRequest
 import com.johanncanon.globallogic.user_management_service.dto.JwtResponse;
 import com.johanncanon.globallogic.user_management_service.dto.LoginRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
+import com.johanncanon.globallogic.user_management_service.entity.Phone;
+import com.johanncanon.globallogic.user_management_service.entity.User;
 import com.johanncanon.globallogic.user_management_service.repository.UserRepository;
-
 
 @Service
 public class UserService {
@@ -20,35 +23,98 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    public UserService( UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil ) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
 
+    public UserResponse createUser(CreateUserRequest request) {
 
-    public UserResponse createUser( CreateUserRequest request ) {
-        return null;
+        // Validate if username already exist
+        if (userRepository.existsByName(request.getName())) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        // validate if Email already exist
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        // Create user entity
+        var userEntity = new User();
+        userEntity.setName(request.getName());
+        userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
+        userEntity.setEmail(request.getEmail());
+        userEntity.setPhones(getPhonesFromRequest(request));
+        /**
+         * 1. con la lista de phonesRequest, hacer un forEach para setearlos en el
+         * userEntity
+         */
+
+        var userSaved = userRepository.save(userEntity);
+
+        return mapToUserResponse(userSaved);
     }
 
-    public JwtResponse authenticate( LoginRequest request ) {
-        return null;
-    }
-    
-    public UserResponse getByUserId( Long userId ) {
-        return null;
+    public JwtResponse authenticate(LoginRequest request) {
+
+        Optional<User> userOpt = userRepository.findByName(request.getUsername());
+
+        if (userOpt.isEmpty()) {
+            throw new RuntimeException("Invalid username or password");
+        }
+        var user = userOpt.get();
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new RuntimeException("Invalid username or password");
+        }
+
+        var jwtToken = jwtUtil.generateToken(user.getName());
+        var userResponse = mapToUserResponse(user);
+
+        return new JwtResponse(jwtToken, userResponse);
     }
 
-    public UserResponse getByUsername( String username ) {
-        return null;
+    public UserResponse getUserById(Long userId) {
+        var user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return mapToUserResponse(user);
+    }
+
+    public UserResponse getUserByName(String name) {
+
+        var user = userRepository.findByName(name)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return mapToUserResponse(user);
     }
 
     public List<UserResponse> getAllUsers() {
-        return null;
+        return userRepository.findAll()
+                .stream()
+                .map(this::mapToUserResponse)
+                .collect(Collectors.toList());
     }
 
-    private UserResponse mapToUserResponse( User user ) {
-        return null;
+    private UserResponse mapToUserResponse(User user) {
+        return new UserResponse(
+                user.getId().toString(),
+                user.getCreated() == null ? null : user.getCreated().toString(), // TODO: validar formato de salida
+                user.getLastLogin(), // TODO: sacar la hora del ultimo login
+                user.getToken(), // TODO: obtener el token de la ultima sesion
+                user.getIsActive() // TODO: check if this is correct
+        );
+    }
+
+    private List<Phone> getPhonesFromRequest(CreateUserRequest request) {
+        return request.getPhones().stream()
+                .map(phoneRequest -> new Phone(
+                        phoneRequest.getNumber(),
+                        phoneRequest.getCityCode(),
+                        phoneRequest.getCountryCode()))
+                .collect(Collectors.toList());
     }
 
 }

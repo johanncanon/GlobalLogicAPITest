@@ -1,45 +1,40 @@
 package com.johanncanon.globallogic.user_management_service.entity;
 
+import java.util.UUID;
+
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.GenericGenerator;
+
 @Entity
-@Table( name = "phones")
+@Table(name = "phones")
 public class Phone {
 
     @Id
-    @GeneratedValue( strategy = GenerationType.IDENTITY )
-    private Long id;
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
+    private UUID id;
 
-    @ManyToOne( fetch = FetchType.LAZY )
-    @JoinColumn( name = "user_id" )
+    @ManyToOne
+    @JoinColumn(name = "user_id")
     private User user;
+
     private String number;
     private String cityCode;
     private String countryCode;
-    
-    public Phone() {}
 
-    public Phone(Long id, User user, String number, String cityCode, String countryCode) {
-        this.id = id;
-        this.user = user;
+    public Phone() {
+    }
+
+    public Phone(String number, String cityCode, String countryCode) {
         this.number = number;
         this.cityCode = cityCode;
         this.countryCode = countryCode;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getNumber() {
@@ -73,9 +68,5 @@ public class Phone {
     public void setUser(User user) {
         this.user = user;
     }
-
-    
-    
-    
 
 }

@@ -3,14 +3,14 @@ package com.johanncanon.globallogic.user_management_service.dto;
 public class PhoneRequest {
 
     private String number;
-    private String citiCode;
+    private String cityCode;
     private String countryCode;
     
     public PhoneRequest() {}
 
-    public PhoneRequest(String number, String citiCode, String countryCode) {
+    public PhoneRequest(String number, String cityCode, String countryCode) {
         this.number = number;
-        this.citiCode = citiCode;
+        this.cityCode = cityCode;
         this.countryCode = countryCode;
     }
 
@@ -22,12 +22,12 @@ public class PhoneRequest {
         this.number = number;
     }
 
-    public String getCitiCode() {
-        return citiCode;
+    public String getCityCode() {
+        return cityCode;
     }
 
-    public void setCitiCode(String citiCode) {
-        this.citiCode = citiCode;
+    public void setCityCode(String cityCode) {
+        this.cityCode = cityCode;
     }
 
     public String getCountryCode() {
