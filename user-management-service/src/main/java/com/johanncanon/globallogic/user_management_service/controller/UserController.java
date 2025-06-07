@@ -31,22 +31,15 @@ public class UserController {
 
     @PostMapping("/auth/register")
     public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
-        try {
-            var user = userService.createUser(request);
-            return ResponseEntity.ok(user);
-        } catch (Exception e) { // TODO: handle exception
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        var user = userService.createUser(request);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping("/auth/login")
     public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request) {
-        try {
-            var response = userService.authenticate(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) { // TODO: handle exception
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        var response = userService.authenticate(request);
+        return ResponseEntity.ok(response);
+
     }
 
     @GetMapping("/users")
@@ -57,22 +50,14 @@ public class UserController {
 
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable String id) {
-        try {
-            var user = userService.getUserById(id);
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+        var user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
     }
 
     @GetMapping("/users/name/{name}")
     public ResponseEntity<?> getUserByName(@PathVariable String name) {
-        try {
-            var user = userService.getUserByName(name);
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
+        var user = userService.getUserByName(name);
+        return ResponseEntity.ok(user);
     }
 
 }

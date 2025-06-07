@@ -27,5 +27,5 @@ spring:
 
 app:
   jwt:
-    secret: mySecretKey
+    secret: U3VwZXItU2VjcmV0LUtleS1Gb3ItSldULUF1dGhlbnRpY2F0aW9uLVB1cnBvc2VzLTI1Ni1CaXRzCg==
     expiration: 86400000 # 24 hours

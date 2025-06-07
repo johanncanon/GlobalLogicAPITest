@@ -1,15 +1,14 @@
 package com.johanncanon.globallogic.user_management_service.config.security;
 
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
-
-import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
 @Component
@@ -21,8 +20,8 @@ public class JwtUtil {
     @Value("${app.jwt.expiration}")
     private int jwtExpirationMs;
 
-    private SecretKey getSingKey() {
-        return Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private Key getSignInKey() {
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(String name) {
@@ -30,13 +29,13 @@ public class JwtUtil {
                 .setSubject(name)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(getSingKey())
+                .signWith(getSignInKey())
                 .compact();
     }
 
     public String getNameFromToken(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(getSingKey())
+                .setSigningKey(getSignInKey())
                 .build()
                 .parseClaimsJws(token)
                 .getBody()
@@ -46,7 +45,7 @@ public class JwtUtil {
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(getSingKey())
+                    .setSigningKey(getSignInKey())
                     .build()
                     .parseClaimsJws(token);
             return true;

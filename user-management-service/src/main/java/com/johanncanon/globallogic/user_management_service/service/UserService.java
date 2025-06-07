@@ -2,6 +2,7 @@ package com.johanncanon.globallogic.user_management_service.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,6 +16,9 @@ import com.johanncanon.globallogic.user_management_service.dto.PhoneRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
 import com.johanncanon.globallogic.user_management_service.entity.Phone;
 import com.johanncanon.globallogic.user_management_service.entity.User;
+import com.johanncanon.globallogic.user_management_service.exception.custom.InvalidCredentialsException;
+import com.johanncanon.globallogic.user_management_service.exception.custom.ResourceNotFoundException;
+import com.johanncanon.globallogic.user_management_service.exception.custom.UserAlreadyExistsException;
 import com.johanncanon.globallogic.user_management_service.repository.UserRepository;
 
 @Service
@@ -34,12 +38,12 @@ public class UserService {
 
         // Validate if username already exist
         if (userRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Username already exists");
+            throw new UserAlreadyExistsException("Campo Name ya existe, intente otro nombre");
         }
 
         // validate if Email already exist
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new UserAlreadyExistsException("Email ya existe, intente otro email");
         }
 
         // Create user entity
@@ -64,12 +68,12 @@ public class UserService {
         Optional<User> userOpt = userRepository.findByName(request.getUsername());
 
         if (userOpt.isEmpty()) {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException("Nombre o contraseña incorrectos");
         }
         var user = userOpt.get();
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException("Constraseña incorrecta");
         }
 
         var jwtToken = jwtUtil.generateToken(user.getName());
@@ -79,8 +83,8 @@ public class UserService {
     }
 
     public UserResponse getUserById(String userId) {
-        var user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        var user = userRepository.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return mapToUserResponse(user);
     }
@@ -88,7 +92,7 @@ public class UserService {
     public UserResponse getUserByName(String name) {
 
         var user = userRepository.findByName(name)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         return mapToUserResponse(user);
     }
