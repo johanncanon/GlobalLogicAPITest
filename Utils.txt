@@ -1,0 +1,41 @@
+Curls de los endpoints de la prueba:
+
+curl --location 'http://localhost:8080/api/auth/register' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "name": "johan canon",
+    "email": "johann.canon@globallogic.com",
+    "password": "johAnncan0n1",
+    "phones": [
+        {
+            "number": "3157506128",
+            "cityCode": "3",
+            "countryCode": "54"
+        },
+        {
+            "number": "3508621690",
+            "cityCode": "3",
+            "countryCode": "54"
+        }
+    ]
+}'
+
+
+curl --location 'http://localhost:8080/api/auth/login' \
+--header 'Content-Type: application/json' \
+--data '{
+    "username": "paula ananay",
+    "password": "johAnncan0n1"
+}'
+
+curl --location --request GET 'http://localhost:8080/api/users' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJwYXVsYSBhbmFuYXkiLCJpYXQiOjE3NDkyNTQyOTIsImV4cCI6MTc0OTM0MDY5Mn0.Qy-PTej5ELAvjB09mOKSvMl2mFKmT_sxiKf6numvRu3iwSSXeXGdU9Y3P2suiSeynZ2WHcpdO5wftb0JTrg_9g' \
+--data '{
+    "username": "lorenzo gorge",
+    "password": "a2asfGfdfdf4"
+}'
+
+curl --location 'http://localhost:8080/api/users/name/paula ananay' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJwYXVsYSBhbmFuYXkiLCJpYXQiOjE3NDkyNTQyOTIsImV4cCI6MTc0OTM0MDY5Mn0.Qy-PTej5ELAvjB09mOKSvMl2mFKmT_sxiKf6numvRu3iwSSXeXGdU9Y3P2suiSeynZ2WHcpdO5wftb0JTrg_9g' \
+--data ''

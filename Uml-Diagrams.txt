@@ -1,0 +1,202 @@
+@startuml
+!define RECTANGLE class
+
+package "Spring Boot Microservice" {
+    
+    package "Presentation Layer" {
+        [UserController] as Controller
+        note right of Controller : @RestController\n- createUser()\n- loginUser()\n- getAllUsers()\n- getUserById()\n- getUserByName()
+    }
+    
+    package "Security Layer" {
+        [SecurityConfig] as Security
+        [JwtAuthenticationFilter] as Filter
+        [JwtUtil] as JWT
+        
+        note right of Security : @Configuration\n- JWT Filter Chain\n- Password Encoder
+        note right of Filter : @Component\n- Token Validation
+        note right of JWT : @Component\n- Token Generation
+    }
+    
+    package "Business Layer" {
+        [UserService] as Service
+        note right of Service : @Service\n- Business Logic\n- User Operations
+    }
+    
+    package "Data Access Layer" {
+        [UserRepository] as Repository
+        note right of Repository : @Repository\nextends JpaRepository
+    }
+    
+    package "Domain Layer" {
+        [User Entity] as Entity
+        [DTOs] as DTOs
+    }
+    
+    package "Configuration" {
+        [application.yml] as Config
+    }
+  
+    package "Exceptions" {
+        
+      
+        package "Custom" {
+            [BadRequestException] as BadRequest
+            [InvalidCredentialsException] as InvalidCredentials
+            [ResourceNotFoundException] as NotFound
+            [UserAlreadyExistsException] as AlreadyExist
+          
+        }
+        package "Handler" {
+            [GlobalExceptionHandler] as GlobalHandler
+            note right of GlobalHandler : @RestControllerAdvice
+        }
+        package "Model" {
+            [ErrorDetail] as ErrorDetail
+            [ErrorResponse] as ErrorResponse
+        }
+      
+    }
+}
+
+package "External" {
+    [Client Applications] as Client
+    database "H2 Database" as H2
+    [Spring Boot Framework] as SpringBoot
+    [JWT Library] as JWTLib
+}
+
+' Relationships
+Client --> Controller : HTTP Requests
+Controller --> Service : Delegates
+Service --> Repository : Data Access
+Repository --> H2 : JPA/Hibernate
+Repository --> Entity : Maps to
+Service --> DTOs : Uses
+
+Service --> AlreadyExist : Throws
+Service --> NotFound : Throws
+Service --> InvalidCredentials : Throws
+
+ErrorDetail --> ErrorResponse : uses
+
+GlobalHandler --> ErrorDetail : Maps To
+Controller --> GlobalHandler : Delegates
+DTOs --> BadRequest : Throws
+
+Controller --> DTOs : Uses
+
+' Security Flow
+Client --> Filter : All Requests
+Filter --> JWT : Validates
+Filter --> Security : Protected Routes
+JWT --> Config : Uses
+
+' Dependencies
+Service --> SpringBoot : Uses
+JWT --> JWTLib : Uses
+Repository --> SpringBoot : Uses
+
+@enduml
+
+
+@startuml
+!define RECTANGLE class
+
+package "Spring Boot Microservice" {
+    
+    package "Presentation Layer" {
+        [UserController] as Controller
+        note right of Controller : @RestController\n- createUser()\n- loginUser()\n- getAllUsers()\n- getUserById()\n- getUserByName()
+    }
+    
+    package "Security Layer" {
+        [SecurityConfig] as Security
+        [JwtAuthenticationFilter] as Filter
+        [JwtUtil] as JWT
+        
+        note right of Security : @Configuration\n- JWT Filter Chain\n- Password Encoder
+        note right of Filter : @Component\n- Token Validation
+        note right of JWT : @Component\n- Token Generation
+    }
+    
+    package "Business Layer" {
+        [UserService] as Service
+        note right of Service : @Service\n- Business Logic\n- User Operations
+    }
+    
+    package "Data Access Layer" {
+        [UserRepository] as Repository
+        note right of Repository : @Repository\nextends JpaRepository
+    }
+    
+    package "Domain Layer" {
+        [User Entity] as Entity
+        [DTOs] as DTOs
+    }
+    
+    package "Configuration" {
+        [application.yml] as Config
+    }
+  
+    package "Exceptions" {
+        
+      
+        package "Custom" {
+            [BadRequestException] as BadRequest
+            [InvalidCredentialsException] as InvalidCredentials
+            [ResourceNotFoundException] as NotFound
+            [UserAlreadyExistsException] as AlreadyExist
+          
+        }
+        package "Handler" {
+            [GlobalExceptionHandler] as GlobalHandler
+            note right of GlobalHandler : @RestControllerAdvice
+        }
+        package "Model" {
+            [ErrorDetail] as ErrorDetail
+            [ErrorResponse] as ErrorResponse
+        }
+      
+    }
+}
+
+package "External" {
+    [Client Applications] as Client
+    database "H2 Database" as H2
+    [Spring Boot Framework] as SpringBoot
+    [JWT Library] as JWTLib
+}
+
+' Relationships
+Client --> Controller : HTTP Requests
+Controller --> Service : Delegates
+Service --> Repository : Data Access
+Repository --> H2 : JPA/Hibernate
+Repository --> Entity : Maps to
+Service --> DTOs : Uses
+
+Service --> AlreadyExist : Throws
+Service --> NotFound : Throws
+Service --> InvalidCredentials : Throws
+
+ErrorDetail --> ErrorResponse : uses
+
+GlobalHandler --> ErrorDetail : Maps To
+Controller --> GlobalHandler : Delegates
+DTOs --> BadRequest : Throws
+
+Controller --> DTOs : Uses
+
+' Security Flow
+Client --> Filter : All Requests
+Filter --> JWT : Validates
+Filter --> Security : Protected Routes
+JWT --> Config : Uses
+
+' Dependencies
+Service --> SpringBoot : Uses
+JWT --> JWTLib : Uses
+Repository --> SpringBoot : Uses
+
+@enduml
