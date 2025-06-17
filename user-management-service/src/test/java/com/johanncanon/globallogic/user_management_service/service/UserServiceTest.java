@@ -15,13 +15,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.johanncanon.globallogic.user_management_service.config.security.JwtUtil;
 import com.johanncanon.globallogic.user_management_service.dto.CreateUserRequest;
-import com.johanncanon.globallogic.user_management_service.dto.LoginRequest;
 import com.johanncanon.globallogic.user_management_service.dto.PhoneRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
 import com.johanncanon.globallogic.user_management_service.entity.User;
@@ -38,6 +39,9 @@ class UserServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AuthService authService;
 
     @Mock
     private JwtUtil jwtUtil;
@@ -68,7 +72,6 @@ class UserServiceTest {
     @Test
     void createUser_Success() {
         // Arrange
-        when(userRepository.existsByName(anyString())).thenReturn(false);
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(jwtUtil.generateToken(anyString())).thenReturn("jwtToken");
@@ -85,17 +88,8 @@ class UserServiceTest {
     }
 
     @Test
-    void createUser_NameAlreadyExists() {
-        when(userRepository.existsByName(anyString())).thenReturn(true);
-
-        assertThrows(UserAlreadyExistsException.class, () -> {
-            userService.createUser(createUserRequest);
-        });
-    }
-
-    @Test
     void createUser_EmailAlreadyExists() {
-        when(userRepository.existsByName(anyString())).thenReturn(false);
+
         when(userRepository.existsByEmail(anyString())).thenReturn(true);
 
         assertThrows(UserAlreadyExistsException.class, () -> {
@@ -105,12 +99,11 @@ class UserServiceTest {
 
     @Test
     void authenticate_Success() {
-        var loginRequest = new LoginRequest("Test User", "password");
-        when(userRepository.findByName(anyString())).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(true);
+
+        doReturn(Optional.of(user)).when(authService).getCurrentUserBySecurityContext();
         when(jwtUtil.generateToken(anyString())).thenReturn("jwtToken");
 
-        var jwtResponse = userService.authenticate(loginRequest);
+        var jwtResponse = userService.authenticate();
 
         assertNotNull(jwtResponse);
         assertEquals("jwtToken", jwtResponse.getToken());
@@ -119,23 +112,24 @@ class UserServiceTest {
 
     @Test
     void authenticate_UserNotFound() {
-        var loginRequest = new LoginRequest("Test User", "password");
-        when(userRepository.findByName(anyString())).thenReturn(Optional.empty());
+        doReturn(Optional.empty()).when(authService).getCurrentUserBySecurityContext();
 
         assertThrows(InvalidCredentialsException.class, () -> {
-            userService.authenticate(loginRequest);
+            userService.authenticate();
         });
     }
 
     @Test
     void authenticate_InvalidPassword() {
-        var loginRequest = new LoginRequest("Test User", "wrongpassword");
-        when(userRepository.findByName(anyString())).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(anyString(), anyString())).thenReturn(false);
 
-        assertThrows(InvalidCredentialsException.class, () -> {
-            userService.authenticate(loginRequest);
-        });
+        doReturn(Optional.of(user)).when(authService).getCurrentUserBySecurityContext();
+        when(jwtUtil.generateToken(anyString())).thenReturn("jwtToken");
+
+        var jwtResponse = userService.authenticate();
+
+        assertNotNull(jwtResponse);
+        assertEquals("jwtToken", jwtResponse.getToken());
+        assertEquals(user.getName(), jwtResponse.getUser().getName());
     }
 
     @Test

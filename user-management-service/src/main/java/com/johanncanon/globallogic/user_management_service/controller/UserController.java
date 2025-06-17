@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.johanncanon.globallogic.user_management_service.dto.CreateUserRequest;
-import com.johanncanon.globallogic.user_management_service.dto.LoginRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
 import com.johanncanon.globallogic.user_management_service.service.UserService;
 
@@ -36,8 +35,8 @@ public class UserController {
     }
 
     @PostMapping("/auth/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request) {
-        var response = userService.authenticate(request);
+    public ResponseEntity<?> loginUser() {
+        var response = userService.authenticate();
         return ResponseEntity.ok(response);
 
     }

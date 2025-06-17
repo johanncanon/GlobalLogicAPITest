@@ -23,6 +23,7 @@ import com.johanncanon.globallogic.user_management_service.dto.CreateUserRequest
 import com.johanncanon.globallogic.user_management_service.dto.JwtResponse;
 import com.johanncanon.globallogic.user_management_service.dto.LoginRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
+import com.johanncanon.globallogic.user_management_service.service.AuthService;
 import com.johanncanon.globallogic.user_management_service.service.UserService;
 
 @WebMvcTest(UserController.class)
@@ -33,6 +34,9 @@ class UserControllerTest {
 
     @MockBean
     private UserService userService;
+
+    @MockBean
+    private AuthService authService;
 
     @MockBean
     private JwtUtil jwtUtil;
@@ -79,7 +83,7 @@ class UserControllerTest {
         jwtResponse.setToken(fakeToken);
         jwtResponse.setUser(userResponse);
 
-        when(userService.authenticate(any(LoginRequest.class))).thenReturn(jwtResponse);
+        when(userService.authenticate()).thenReturn(jwtResponse);
         when(jwtUtil.generateToken(userResponse.getEmail())).thenReturn(fakeToken);
 
         mockMvc.perform(post("/api/auth/login")

@@ -50,7 +50,7 @@ class JwtAuthenticationFilterTest {
         request.addHeader("Authorization", "Bearer " + token);
 
         when(jwtUtil.validateToken(token)).thenReturn(true);
-        when(jwtUtil.getNameFromToken(token)).thenReturn(username);
+        when(jwtUtil.getEmailFromToken(token)).thenReturn(username);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 

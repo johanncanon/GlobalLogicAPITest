@@ -25,10 +25,10 @@ class JwtUtilTest {
     @Test
     void shouldGenerateValidToken() {
         // Given
-        String username = "testuser";
+        String email = "testuser@test.com";
 
         // When
-        String token = jwtUtil.generateToken(username);
+        String token = jwtUtil.generateToken(email);
 
         // Then
         assertNotNull(token);
@@ -39,14 +39,14 @@ class JwtUtilTest {
     @Test
     void shouldExtractNameFromToken() {
         // Given
-        String username = "testuser";
-        String token = jwtUtil.generateToken(username);
+        String email = "testuser@test.com";
+        String token = jwtUtil.generateToken(email);
 
         // When
-        String extractedUsername = jwtUtil.getNameFromToken(token);
+        String extractedUsername = jwtUtil.getEmailFromToken(token);
 
         // Then
-        assertEquals(username, extractedUsername);
+        assertEquals(email, extractedUsername);
     }
 
     @Test

@@ -27,19 +27,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AuthService authService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil,
+            AuthService authService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.authService = authService;
     }
 
     public UserResponse createUser(CreateUserRequest request) {
-
-        // Validate if username already exist
-        if (userRepository.existsByName(request.getName())) {
-            throw new UserAlreadyExistsException("Campo Name ya existe, intente otro nombre");
-        }
 
         // validate if Email already exist
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -52,7 +50,7 @@ public class UserService {
         userEntity.setPassword(passwordEncoder.encode(request.getPassword()));
         userEntity.setEmail(request.getEmail());
 
-        userEntity.setToken(jwtUtil.generateToken(request.getName()));
+        userEntity.setToken(jwtUtil.generateToken(request.getEmail()));
 
         for (Phone phone : getPhonesFromRequest(request)) {
             userEntity.addPhone(phone);
@@ -63,20 +61,15 @@ public class UserService {
         return mapToUserResponse(userSaved);
     }
 
-    public JwtResponse authenticate(LoginRequest request) {
+    public JwtResponse authenticate() {
 
-        Optional<User> userOpt = userRepository.findByName(request.getUsername());
+        Optional<User> userOpt = authService.getCurrentUserBySecurityContext();
 
         if (userOpt.isEmpty()) {
             throw new InvalidCredentialsException("Nombre o contraseña incorrectos");
         }
         var user = userOpt.get();
-
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new InvalidCredentialsException("Constraseña incorrecta");
-        }
-
-        var jwtToken = jwtUtil.generateToken(user.getName());
+        var jwtToken = jwtUtil.generateToken(user.getEmail());
         var userResponse = mapToUserResponse(user);
 
         return new JwtResponse(jwtToken, userResponse);
