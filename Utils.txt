@@ -21,12 +21,9 @@ curl --location 'http://localhost:8080/api/auth/register' \
 }'
 
 
-curl --location 'http://localhost:8080/api/auth/login' \
---header 'Content-Type: application/json' \
---data '{
-    "username": "paula ananay",
-    "password": "johAnncan0n1"
-}'
+curl --location --request POST 'http://localhost:8080/api/auth/login' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJwYWJsaXRvLmZlcm5hbmRlekBnbG9iYWxsb2dpYy5jb20iLCJpYXQiOjE3NTAxMTY3ODAsImV4cCI6MTc1MDIwMzE4MH0.E2OTRAM1TJOvohkp44mnaG0yOQ_wVftg2gp3WvkEJ2LPXfa7facVHpqVXjtXpJvznEia6xKVINIViaQrAGOg5A' \
+--data ''
 
 curl --location --request GET 'http://localhost:8080/api/users' \
 --header 'Content-Type: application/json' \
