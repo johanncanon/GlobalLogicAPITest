@@ -1,0 +1,41 @@
+# Configuración específica para tests
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  security:
+    user:
+      name: test
+      password: test
+
+# Configuración de logging para tests
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.johanncanon.globallogic: DEBUG
+
+# Configuración de actuator para tests
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# Configuración de servidor para tests
+server:
+  port: 0

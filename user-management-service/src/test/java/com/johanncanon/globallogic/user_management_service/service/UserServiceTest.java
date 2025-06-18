@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import com.johanncanon.globallogic.user_management_service.config.security.JwtUt
 import com.johanncanon.globallogic.user_management_service.dto.CreateUserRequest;
 import com.johanncanon.globallogic.user_management_service.dto.PhoneRequest;
 import com.johanncanon.globallogic.user_management_service.dto.UserResponse;
+import com.johanncanon.globallogic.user_management_service.entity.Phone;
 import com.johanncanon.globallogic.user_management_service.entity.User;
 import com.johanncanon.globallogic.user_management_service.exception.custom.InvalidCredentialsException;
 import com.johanncanon.globallogic.user_management_service.exception.custom.ResourceNotFoundException;
@@ -51,6 +53,7 @@ class UserServiceTest {
 
     private CreateUserRequest createUserRequest;
     private User user;
+    private Phone phone;
 
     @BeforeEach
     void setUp() {
@@ -66,6 +69,11 @@ class UserServiceTest {
         user.setPassword("encodedPassword");
         user.setToken("jwtToken");
         user.setIsActive(true);
+
+        // Crear y agregar teléfono al usuario para cubrir mapPhoneToPhoneRequest
+        phone = new Phone("1234567", "1", "57");
+        user.addPhone(phone);
+
         user.prePersist();
     }
 
@@ -85,6 +93,12 @@ class UserServiceTest {
         assertEquals(user.getName(), userResponse.getName());
         assertEquals(user.getEmail(), userResponse.getEmail());
         assertNotNull(userResponse.getId());
+        // Verificar que los teléfonos se mapearon correctamente
+        assertNotNull(userResponse.getPhones());
+        assertEquals(1, userResponse.getPhones().size());
+        assertEquals(phone.getNumber(), userResponse.getPhones().get(0).getNumber());
+        assertEquals(phone.getCityCode(), userResponse.getPhones().get(0).getCityCode());
+        assertEquals(phone.getCountryCode(), userResponse.getPhones().get(0).getCountryCode());
     }
 
     @Test
@@ -108,6 +122,10 @@ class UserServiceTest {
         assertNotNull(jwtResponse);
         assertEquals("jwtToken", jwtResponse.getToken());
         assertEquals(user.getName(), jwtResponse.getUser().getName());
+        // Verificar que los teléfonos se mapearon correctamente
+        assertNotNull(jwtResponse.getUser().getPhones());
+        assertEquals(1, jwtResponse.getUser().getPhones().size());
+        assertEquals(phone.getNumber(), jwtResponse.getUser().getPhones().get(0).getNumber());
     }
 
     @Test
@@ -141,6 +159,10 @@ class UserServiceTest {
 
         assertNotNull(userResponse);
         assertEquals(userId, userResponse.getId());
+        // Verificar que los teléfonos se mapearon correctamente
+        assertNotNull(userResponse.getPhones());
+        assertEquals(1, userResponse.getPhones().size());
+        assertEquals(phone.getNumber(), userResponse.getPhones().get(0).getNumber());
     }
 
     @Test
@@ -160,6 +182,10 @@ class UserServiceTest {
 
         assertNotNull(userResponse);
         assertEquals(user.getName(), userResponse.getName());
+        // Verificar que los teléfonos se mapearon correctamente
+        assertNotNull(userResponse.getPhones());
+        assertEquals(1, userResponse.getPhones().size());
+        assertEquals(phone.getNumber(), userResponse.getPhones().get(0).getNumber());
     }
 
     @Test
@@ -179,6 +205,10 @@ class UserServiceTest {
 
         assertEquals(1, users.size());
         assertEquals(user.getName(), users.get(0).getName());
+        // Verificar que los teléfonos se mapearon correctamente
+        assertNotNull(users.get(0).getPhones());
+        assertEquals(1, users.get(0).getPhones().size());
+        assertEquals(phone.getNumber(), users.get(0).getPhones().get(0).getNumber());
     }
 
     @Test
@@ -188,5 +218,64 @@ class UserServiceTest {
         var users = userService.getAllUsers();
 
         assertEquals(0, users.size());
+    }
+
+    @Test
+    void mapToUserResponse_WithMultiplePhones() {
+        User userWithMultiplePhones = new User();
+        userWithMultiplePhones.setName("Test User");
+        userWithMultiplePhones.setEmail("test@example.com");
+        userWithMultiplePhones.setPassword("encodedPassword");
+        userWithMultiplePhones.setToken("jwtToken");
+        userWithMultiplePhones.setIsActive(true);
+
+        Phone phone1 = new Phone("1234567", "1", "57");
+        Phone phone2 = new Phone("9876543", "2", "57");
+        Phone phone3 = new Phone("5555555", "3", "57");
+
+        userWithMultiplePhones.addPhone(phone1);
+        userWithMultiplePhones.addPhone(phone2);
+        userWithMultiplePhones.addPhone(phone3);
+
+        userWithMultiplePhones.prePersist();
+
+        when(userRepository.findById(userWithMultiplePhones.getId())).thenReturn(Optional.of(userWithMultiplePhones));
+
+        UserResponse userResponse = userService.getUserById(userWithMultiplePhones.getId().toString());
+
+        assertNotNull(userResponse);
+        assertEquals(userWithMultiplePhones.getName(), userResponse.getName());
+        assertNotNull(userResponse.getPhones());
+        assertEquals(3, userResponse.getPhones().size());
+        assertEquals(phone1.getNumber(), userResponse.getPhones().get(0).getNumber());
+        assertEquals(phone1.getCityCode(), userResponse.getPhones().get(0).getCityCode());
+        assertEquals(phone1.getCountryCode(), userResponse.getPhones().get(0).getCountryCode());
+        assertEquals(phone2.getNumber(), userResponse.getPhones().get(1).getNumber());
+        assertEquals(phone2.getCityCode(), userResponse.getPhones().get(1).getCityCode());
+        assertEquals(phone2.getCountryCode(), userResponse.getPhones().get(1).getCountryCode());
+        assertEquals(phone3.getNumber(), userResponse.getPhones().get(2).getNumber());
+        assertEquals(phone3.getCityCode(), userResponse.getPhones().get(2).getCityCode());
+        assertEquals(phone3.getCountryCode(), userResponse.getPhones().get(2).getCountryCode());
+    }
+
+    @Test
+    void mapToUserResponse_WithNullPhones() {
+        User userWithoutPhones = new User();
+        userWithoutPhones.setName("Test User");
+        userWithoutPhones.setEmail("test@example.com");
+        userWithoutPhones.setPassword("encodedPassword");
+        userWithoutPhones.setToken("jwtToken");
+        userWithoutPhones.setIsActive(true);
+        userWithoutPhones.setPhones(null); // Establecer phones como null
+
+        userWithoutPhones.prePersist();
+
+        when(userRepository.findById(userWithoutPhones.getId())).thenReturn(Optional.of(userWithoutPhones));
+
+        UserResponse userResponse = userService.getUserById(userWithoutPhones.getId().toString());
+
+        assertNotNull(userResponse);
+        assertEquals(userWithoutPhones.getName(), userResponse.getName());
+        assertNull(userResponse.getPhones());
     }
 }

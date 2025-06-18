@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,7 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.johanncanon.globallogic.user_management_service.entity.User;
+import com.johanncanon.globallogic.user_management_service.exception.custom.UnauthorizedException;
 import com.johanncanon.globallogic.user_management_service.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +57,7 @@ class AuthServiceTest {
     void getCurrentUserEmail_Success() {
         // Arrange
         when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn(TEST_EMAIL);
         SecurityContextHolder.setContext(securityContext);
 
@@ -67,24 +70,77 @@ class AuthServiceTest {
     }
 
     @Test
+    void getCurrentUserEmail_WithNullAuthentication() {
+        // Arrange
+        when(securityContext.getAuthentication()).thenReturn(null);
+        SecurityContextHolder.setContext(securityContext);
+
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserEmail();
+        });
+    }
+
+    @Test
+    void getCurrentUserEmail_WithNotAuthenticated() {
+        // Arrange
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(false);
+        SecurityContextHolder.setContext(securityContext);
+
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserEmail();
+        });
+    }
+
+    @Test
     void getCurrentUserEmail_WithEmptyAuthenticationName() {
         // Arrange
         when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn("");
         SecurityContextHolder.setContext(securityContext);
 
-        // Act
-        String result = authService.getCurrentUserEmail();
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserEmail();
+        });
+    }
 
-        // Assert
-        assertNotNull(result);
-        assertEquals("", result);
+    @Test
+    void getCurrentUserEmail_WithAnonymousUser() {
+        // Arrange
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("anonymousUser");
+        SecurityContextHolder.setContext(securityContext);
+
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserEmail();
+        });
+    }
+
+    @Test
+    void getCurrentUserEmail_WithNullAuthenticationName() {
+        // Arrange
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn(null);
+        SecurityContextHolder.setContext(securityContext);
+
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserEmail();
+        });
     }
 
     @Test
     void getCurrentUserBySecurityContext_UserFound() {
         // Arrange
         when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn(TEST_EMAIL);
         SecurityContextHolder.setContext(securityContext);
 
@@ -105,6 +161,7 @@ class AuthServiceTest {
     void getCurrentUserBySecurityContext_UserNotFound() {
         // Arrange
         when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.isAuthenticated()).thenReturn(true);
         when(authentication.getName()).thenReturn("nonexistent@example.com");
         SecurityContextHolder.setContext(securityContext);
 
@@ -119,20 +176,30 @@ class AuthServiceTest {
     }
 
     @Test
-    void getCurrentUserBySecurityContext_WithEmptyEmail() {
+    void getCurrentUserBySecurityContext_WithUnauthorizedException() {
         // Arrange
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("");
+        when(securityContext.getAuthentication()).thenReturn(null);
         SecurityContextHolder.setContext(securityContext);
 
-        when(userRepository.findByEmail("")).thenReturn(Optional.empty());
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserBySecurityContext();
+        });
+    }
 
-        // Act
-        Optional<User> result = authService.getCurrentUserBySecurityContext();
+    @Test
+    void getCurrentUserBySecurityContext_WithUnexpectedException() {
+        // Arrange - Mock SecurityContextHolder to throw an unexpected exception
+        when(securityContext.getAuthentication()).thenThrow(new RuntimeException("Unexpected error"));
+        SecurityContextHolder.setContext(securityContext);
 
-        // Assert
-        assertNotNull(result);
-        assertFalse(result.isPresent());
+        // Act & Assert
+        UnauthorizedException exception = assertThrows(UnauthorizedException.class, () -> {
+            authService.getCurrentUserBySecurityContext();
+        });
+
+        // Verify the exception message contains the original error message
+        assertTrue(exception.getMessage().contains("Error de usuario: Unexpected error"));
     }
 
     @Test
